@@ -3,22 +3,26 @@
 
 {% block content %}
 <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-    <h1 class="display-4">Поиск</h1>
-    <p class="lead">Найти деталь по артиклу</p>
+    <h1 class="display-4">{%if news%}{{title}} {% endif %}</h1>
 </div>
 
 <div class=" h-100 d-flex justify-content-center align-items-center">
-    <form method="post" action="/search">
+    <form method="post" action="">
         {% csrf_token %}
         <div class="input-group mb-3">
-            <input name="search_art" type="text" class="form-control form-control-lg "
-                   placeholder="Введите артикул детали:">
+            <input name="storage" type="text" class="form-control form-control-lg "
+                   placeholder="Введите место хранения детали:"
+                   onkeyup="var start = this.selectionStart;var end = this.selectionEnd;this.value = this.value.toUpperCase();this.setSelectionRange(start, end);">
             <button type="submit" class="btn btn-primary">Найти деталь</button>
         </div>
     </form>
 </div>
 
 {%if news%}
+<!--<div class=" h-100 d-flex justify-content-center align-items-center">-->
+<!--    <div class="form-text">Сумма: {{news.price}}</div>-->
+<!--</div>-->
+
 <div class="container py-2">
     <div class="row row-cols-1 row-cols-md-4 mb-3 text-center">
 
@@ -39,14 +43,14 @@
                 <th scope="col"></th>
             </tr>
             </thead>
-
-
             <tbody>
+
+
             {%for i in news%}
             <tr>
                 <td>
                     {% if i.product_is_accepted%}
-                    <div onclick="location.href='{% url 'checkbox' i.art i.pk False %}'">
+                    <div onclick="location.href='{% url 'storage' i.storage_location i.pk False %}'">
                         <div class="form-check form-switch">
                             <input name="checkbox" class="form-check-input" type="checkbox" checked disabled>
                             <label class="form-check-label">Найдена</label>
@@ -54,16 +58,16 @@
                     </div>
 
                     {% else %}
-                    <div onclick="location.href='{% url 'checkbox' i.art i.pk True %}'">
+                    <div onclick="location.href='{% url 'storage' i.storage_location i.pk True %}'">
                         <div class="form-check form-switch">
                             <input name="checkbox" class="form-check-input" type="checkbox">
                             <label class="form-check-label">Не найдена</label>
                         </div>
                     </div>
                     {% endif %}
-
                 </td>
                 <th scope="row">{{i.pk}}</th>
+                <td>{{i.manufacturer}}</td>
                 <td><b>{{i.art}}</b></td>
                 <td>{{i.description|truncatechars:50}}</td>
                 <td>{{i.qty}}</td>
@@ -71,8 +75,9 @@
                 <td>{{i.storage_location}}</td>
                 <td>{{i.delivery_date}}</td>
                 <td>{{i.supplier}}</td>
-            </tr>
-            {% endfor %}
+
+
+                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -84,5 +89,4 @@
     <div class="form-text">Запись {{search_art}} не найдена</div>
 </div>
 {%endif%}
-
 {% endblock%}
