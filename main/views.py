@@ -17,23 +17,33 @@ def home(request):
             category_list = []
             fieldnames = ['manufacturer', 'art', 'description', 'qty', 'price', 'storage_location', 'delivery_date',
                           'supplier']
-
+            count = 0
             with open(path, newline='') as f:
                 reader = csv.DictReader(f, delimiter=';', fieldnames=fieldnames)
                 for row in reader:
-                    date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
-                    row['delivery_date'] = date_ref
-                    row['price'] = row['price'].replace('.', ',')
-                    category_list.append(row)
+                    count += 1
+                    try:
+                        row['price'] = row['price'].replace(',', '.')
 
+                        if row['price'] and row['delivery_date'] and row['storage_location'] and row['supplier']:
+                            date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
+                            row['delivery_date'] = date_ref
+                            category_list.append(row)
+                        else:
+                            pass
+                    except:
+                        pass
+
+            print(category_list)
             Autoparts.objects.bulk_create([Autoparts(**category_item) for category_item in category_list])
-
+            print(f'Загружено строк {len(category_list)} из / {count}')
 
         try:
             handle(name_load_file)
             return render(request, 'catalog/home.html', {'load_file': name_load_file, 'title': 'Загрузка'})
         except:
             return render(request, 'catalog/home.html', {'load_file1': name_load_file, 'title': 'Загрузка'})
+
     return render(request, 'catalog/home.html', {'title': 'Загрузка'})
 
 
