@@ -39,9 +39,9 @@
                 <th scope="col"></th>
             </tr>
             </thead>
-
-
             <tbody>
+
+
             {%for i in news%}
             <tr>
                 <td>
@@ -61,9 +61,9 @@
                         </div>
                     </div>
                     {% endif %}
-
                 </td>
                 <th scope="row">{{i.pk}}</th>
+                <td>{{i.manufacturer}}</td>
                 <td><b>{{i.art}}</b></td>
                 <td>{{i.description|truncatechars:50}}</td>
                 <td>{{i.qty}}</td>

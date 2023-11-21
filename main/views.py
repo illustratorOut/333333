@@ -15,6 +15,7 @@ def home(request):
         # open('/path/to/directory/file_name.pdf', 'wb').write(load_file.content)
         def handle(path):
             category_list = []
+            category_list2 = []
             fieldnames = ['manufacturer', 'art', 'description', 'qty', 'price', 'storage_location', 'delivery_date',
                           'supplier']
             count = 0
@@ -22,17 +23,32 @@ def home(request):
                 reader = csv.DictReader(f, delimiter=';', fieldnames=fieldnames)
                 for row in reader:
                     count += 1
-                    try:
-                        row['price'] = row['price'].replace(',', '.')
 
-                        if row['price'] and row['delivery_date'] and row['storage_location'] and row['supplier']:
+                    if not row['qty'].isdigit():
+                        row['qty'] = 0
+
+                    if row['delivery_date'] != "" and row['storage_location'] != "" and row['supplier'] != "":
+                        try:
+                            row['price'] = row['price'].replace(',', '.')
+                        except Exception as e:
+                            print(f'Ошибка смены знака , на . - {e}')
+
+                        date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
+                        print(count)
+                        row['delivery_date'] = date_ref
+                        category_list.append(row)
+                    else:
+
+                        if not row['delivery_date']:
+                            row['delivery_date'] = datetime.date(2023, 7, 26)
+                        else:
                             date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
                             row['delivery_date'] = date_ref
-                            category_list.append(row)
-                        else:
-                            pass
-                    except:
-                        pass
+                        if not row['storage_location']:
+                            row['storage_location'] = 'нет данных'
+                        if not row['supplier']:
+                            row['supplier'] = 'нет данных'
+                        category_list.append(row)
 
             print(category_list)
             Autoparts.objects.bulk_create([Autoparts(**category_item) for category_item in category_list])
