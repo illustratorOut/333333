@@ -1,6 +1,7 @@
 import csv
 import datetime
 import xlwt
+from django.forms import model_to_dict
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -12,13 +13,12 @@ def home(request):
     if request.method == 'POST':
         name_load_file = request.POST.get('file_load')
 
-        # open('/path/to/directory/file_name.pdf', 'wb').write(load_file.content)
         def handle(path):
             category_list = []
-            category_list2 = []
             fieldnames = ['manufacturer', 'art', 'description', 'qty', 'price', 'storage_location', 'delivery_date',
                           'supplier']
             count = 0
+
             with open(path, newline='') as f:
                 reader = csv.DictReader(f, delimiter=';', fieldnames=fieldnames)
                 for row in reader:
@@ -32,15 +32,16 @@ def home(request):
                             row['price'] = row['price'].replace(',', '.')
                         except Exception as e:
                             print(f'Ошибка смены знака , на . - {e}')
-
                         date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
-                        print(count)
                         row['delivery_date'] = date_ref
+                        row['storage_location'] = row['storage_location'].upper()
                         category_list.append(row)
+
                     else:
+                        row['storage_location'] = row['storage_location'].upper()
 
                         if not row['delivery_date']:
-                            row['delivery_date'] = datetime.date(2023, 7, 26)
+                            row['delivery_date'] = datetime.date(2023, 1, 1)
                         else:
                             date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
                             row['delivery_date'] = date_ref
@@ -50,13 +51,17 @@ def home(request):
                             row['supplier'] = 'нет данных'
                         category_list.append(row)
 
-            print(category_list)
             Autoparts.objects.bulk_create([Autoparts(**category_item) for category_item in category_list])
             print(f'Загружено строк {len(category_list)} из / {count}')
+            return count
 
         try:
-            handle(name_load_file)
-            return render(request, 'catalog/home.html', {'load_file': name_load_file, 'title': 'Загрузка'})
+            context = {
+                'title': 'Загрузка',
+                'load_file': name_load_file,
+                'count': handle(name_load_file),
+            }
+            return render(request, 'catalog/home.html', context)
         except:
             return render(request, 'catalog/home.html', {'load_file1': name_load_file, 'title': 'Загрузка'})
 
@@ -106,11 +111,11 @@ def storage(request, storage, pk, status):
     task = Autoparts.objects.get(pk=pk)
     task.product_is_accepted = status
     task.save()
+
     context = {
         'news': Autoparts.objects.filter(storage_location=storage),
         'title': storage
     }
-
     return render(request, 'catalog/storage_location.html', context)
 
 
@@ -122,16 +127,20 @@ def download(request):
     row_num = 0
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
-
-    columns = ['Производитель', 'Артикул', 'Количество', 'Цена', 'Место хранения']
+    font_style.alignment.horz = font_style.alignment.HORZ_CENTER
+    columns = ['Производитель', 'Артикул', 'Кол-во', 'Цена', 'Место хранения']
 
     for col_num in range(len(columns)):
         ws.write(row_num, col_num, columns[col_num], font_style)
 
-    font_style = xlwt.XFStyle()
-
     data = Autoparts.objects.filter(product_is_accepted=True)
 
+    font_style = xlwt.XFStyle()
+    font_style.alignment.horz = font_style.alignment.HORZ_CENTER  # Отцентровать ячейку горизонтально
+    ws.col(0).width = 7000  # Ширина ячейки
+    ws.col(1).width = 5000  # Ширина ячейки
+
+    transpose = [i.price for i in data]
     for my_row in data:
         row_num = row_num + 1
         ws.write(row_num, 0, my_row.manufacturer, font_style)
@@ -139,6 +148,37 @@ def download(request):
         ws.write(row_num, 2, my_row.qty, font_style)
         ws.write(row_num, 3, my_row.price, font_style)
         ws.write(row_num, 4, my_row.storage_location, font_style)
+
+    font_style = xlwt.XFStyle()
+    borders = xlwt.Borders()
+    # borders.left = borders.MEDIUM
+    borders.bottom = borders.MEDIUM
+    borders.top = borders.MEDIUM
+    borders.right = borders.MEDIUM
+
+    font = xlwt.Font()
+    font.name = "Times New Roman"
+    font.height = 20 * 14
+
+    font_style.font = font
+    font_style.borders = borders
+
+    ws.write(row_num + 1, 3, sum(transpose), font_style)
+
+    font_style = xlwt.XFStyle()
+    borders = xlwt.Borders()
+    borders.left = borders.MEDIUM
+    borders.bottom = borders.MEDIUM
+    borders.top = borders.MEDIUM
+    # borders.right = borders.MEDIUM
+
+    font = xlwt.Font()
+    font.name = "Times New Roman"
+    font.height = 20 * 14
+
+    font_style.font = font
+    font_style.borders = borders
+    ws.write(row_num + 1, 2, 'Итого:', font_style)
 
     wb.save(response)
     return response

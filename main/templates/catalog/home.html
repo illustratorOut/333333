@@ -13,8 +13,6 @@
     <div class="mb-3">
 
 
-
-
         <label for="formFileReadonly" class="form-label">Выберите <b>CSV</b> файл</label>
         <form method="post" action="">
             {% csrf_token %}
@@ -29,7 +27,7 @@
 
 {%if load_file %}
 <div class=" h-100 d-flex justify-content-center align-items-center">
-    <div class="bg-success p-2 text-white"><H4>Файл: {{load_file}} загружен!</H4></div>
+    <div class="bg-success p-2 text-white"><H4>Файл({{count}}): {{load_file}} загружен! </H4></div>
 </div>
 
 {% endif %}
