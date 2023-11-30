@@ -1,3 +1,6 @@
 .env
 venv
 *.md
+*.csv
+file_csv
+.csv

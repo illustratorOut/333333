@@ -2,7 +2,6 @@ import csv
 import datetime
 import xlwt
 
-from django.core import serializers
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -66,7 +65,9 @@ def home(request):
                             row['supplier'] = 'нет данных'
                         category_list.append(row)
 
+            print(category_list)
             Autoparts.objects.bulk_create([Autoparts(**category_item) for category_item in category_list])
+
             print(f'Загружено строк {len(category_list)} из / {count}')
             return count
 
@@ -198,25 +199,3 @@ def download(request):
 
     wb.save(response)
     return response
-
-
-def ajax_search(request):
-    if request.method == 'POST':
-
-        task = request.POST.get('task')
-        print(task)
-
-        storage = request.POST.get('storage')
-        context = {
-            'news': Autoparts.objects.filter(storage_location=storage),
-            'title': storage,
-        }
-
-        if request.POST.get('task'):
-            qs = Autoparts.objects.filter(pk=1)
-            qs_json = serializers.serialize('json', qs)
-            print(qs_json)
-            return HttpResponse(qs_json, content_type='application/json')
-
-        return render(request, 'catalog/ajax_search.html', context)
-    return render(request, 'catalog/ajax_search.html')
