@@ -1,12 +1,9 @@
 import csv
 import datetime
-import json
-
 import xlwt
-from django.core import serializers
-from django.forms import model_to_dict
 
-from django.http import HttpResponse, JsonResponse
+from django.core import serializers
+from django.http import HttpResponse
 from django.shortcuts import render
 
 from main.models import Autoparts
@@ -22,7 +19,7 @@ def home(request):
                           'supplier', 'ref_storage']
             count = 0
 
-            with open(path, newline='') as f:
+            with open(f'file_csv/{path}', newline='') as f:
                 reader = csv.DictReader(f, delimiter=';', fieldnames=fieldnames)
                 for row in reader:
                     count += 1
