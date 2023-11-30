@@ -18,14 +18,22 @@
     </form>
 </div>
 
-{%if news%}
-<!--<div class=" h-100 d-flex justify-content-center align-items-center">-->
-<!--    <div class="form-text">Сумма: {{news.price}}</div>-->
-<!--</div>-->
 
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+        var scrollpos = localStorage.getItem('scrollpos');
+        if (scrollpos) window.scrollTo(0, scrollpos);
+    });
+
+    window.onbeforeunload = function(e) {
+        localStorage.setItem('scrollpos', window.scrollY);
+    };
+</script>
+
+
+{%if news%}
 <div class="container py-2">
     <div class="row row-cols-1 row-cols-md-4 mb-3 text-center">
-
         <table class="table">
             <thead>
             <tr>
@@ -66,11 +74,20 @@
                     </div>
                     {% endif %}
                 </td>
-                <th scope="row">{{i.pk}}</th>
+                <th scope="row" id="{{pk}}">{{i.pk}}</th>
                 <td>{{i.manufacturer}}</td>
-                <td><b>{{i.art}}</b></td>
+                <td ><b>{{i.art}}</b></td>
                 <td>{{i.description|truncatechars:50}}</td>
-                <td>{{i.qty}}</td>
+                {% if i.product_is_accepted%}
+                <td>
+                    <div class="numberCircle2">{{i.qty}}</div>
+                </td>
+                {% else %}
+                <td>
+                    <div class="numberCircle">{{i.qty}}</div>
+                </td>
+                {% endif %}
+
                 <td>{{i.price}}</td>
                 <td>{{i.storage_location}}</td>
                 <td>{{i.delivery_date}}</td>

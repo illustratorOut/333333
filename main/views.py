@@ -1,9 +1,12 @@
 import csv
 import datetime
+import json
+
 import xlwt
+from django.core import serializers
 from django.forms import model_to_dict
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 
 from main.models import Autoparts
@@ -16,7 +19,7 @@ def home(request):
         def handle(path):
             category_list = []
             fieldnames = ['manufacturer', 'art', 'description', 'qty', 'price', 'storage_location', 'delivery_date',
-                          'supplier']
+                          'supplier', 'ref_storage']
             count = 0
 
             with open(path, newline='') as f:
@@ -30,15 +33,30 @@ def home(request):
                     if row['delivery_date'] != "" and row['storage_location'] != "" and row['supplier'] != "":
                         try:
                             row['price'] = row['price'].replace(',', '.')
+                            row['price'] = float(row['price'])
                         except Exception as e:
                             print(f'Ошибка смены знака , на . - {e}')
+                            row['price'] = 0
+
                         date_ref = datetime.datetime.strptime(str(row['delivery_date']), '%d.%m.%Y').date()
                         row['delivery_date'] = date_ref
-                        row['storage_location'] = row['storage_location'].upper()
+                        row['storage_location'] = row['storage_location'].upper().strip()
+                        row['ref_storage'] = row['storage_location'].upper().replace('-', '').replace('/', '').replace(
+                            '.', '').replace(' ', '').strip()
                         category_list.append(row)
 
                     else:
-                        row['storage_location'] = row['storage_location'].upper()
+                        try:
+                            row['price'] = row['price'].replace(',', '.')
+                            row['price'] = float(row['price'])
+                        except Exception as e:
+                            print(f'Ошибка смены знака , на  2 блок. - {e}')
+                            row['price'] = 0
+
+                        row['storage_location'] = row['storage_location'].upper().strip()
+                        row['ref_storage'] = row['storage_location'].upper().replace('-', '').replace('/', '').replace(
+                            '.',
+                            '').replace(' ', '').strip()
 
                         if not row['delivery_date']:
                             row['delivery_date'] = datetime.date(2023, 1, 1)
@@ -114,7 +132,8 @@ def storage(request, storage, pk, status):
 
     context = {
         'news': Autoparts.objects.filter(storage_location=storage),
-        'title': storage
+        'title': storage,
+        'all': Autoparts.objects.all()
     }
     return render(request, 'catalog/storage_location.html', context)
 
@@ -182,3 +201,25 @@ def download(request):
 
     wb.save(response)
     return response
+
+
+def ajax_search(request):
+    if request.method == 'POST':
+
+        task = request.POST.get('task')
+        print(task)
+
+        storage = request.POST.get('storage')
+        context = {
+            'news': Autoparts.objects.filter(storage_location=storage),
+            'title': storage,
+        }
+
+        if request.POST.get('task'):
+            qs = Autoparts.objects.filter(pk=1)
+            qs_json = serializers.serialize('json', qs)
+            print(qs_json)
+            return HttpResponse(qs_json, content_type='application/json')
+
+        return render(request, 'catalog/ajax_search.html', context)
+    return render(request, 'catalog/ajax_search.html')
